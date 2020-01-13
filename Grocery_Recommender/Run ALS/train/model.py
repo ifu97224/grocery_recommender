@@ -193,11 +193,16 @@ class fit_and_tune_als:
         self, user_vecs, item_vecs, train_df, train_items_mapping, train_cust_mapping
     ):
         """
-            Function to get user and item factors for the fitted ALS model
+        Function to get user and item factors for the fitted ALS model
 
-            :return als_model:  The specified ALS model
-            :return user_vecs:  The user vectors from the fitted model
-            :return item_vecs:  The item vectors from the fitted model
+        :param user_vecs:  The user vectors from the fitted model
+        :param item_vecs:  The item vectors from the fitted model
+        :param train_df:  The training DataFrame
+        :param train_item_mapping:  Mapping file from index_PROD_CODE to PROD_CODE
+        :param train_cust_mapping:  Mapping file from index_CUST_CODE to CUST_CODE
+
+        :return user_vecs:  The user vectors from the fitted model
+        :return item_vecs:  The item vectors from the fitted model
         """
 
         # Get the user factors
@@ -227,4 +232,53 @@ class fit_and_tune_als:
         item_factors.drop("index_PROD_CODE", axis=1, inplace=True)
 
         return user_factors, item_factors
+    
+    def predict(self, user_vecs, item_vecs, mapping_df, top_x):
+        """
+        Function to get predictions from the fitted ALS model
+
+        :param user_vecs: The user vectors from the ALS model
+        :param item_vecs: The item vectors from the ALS model
+        :mapping_df:  The DataFrame with the lookup between the customer and product indices and 
+                      the actual CUST_CODE and PROD_CODE
+        :top_x: Number of predictions to return per customer
+        :return pred_df:  The DataFrame containing the CUST_CODE and prediction for each PROD_CODE
+        """
+
+        # Get the predicted DataFrame from the dot product of the user and item vectors
+        pred_df = pd.DataFrame(user_vecs.dot(item_vecs.T))
+
+        # Get the column headers(product indices)
+        products = list(mapping_df["index_PROD_CODE"].unique())
+
+        # Replace the column indices with the product index
+        pred_df.columns = products
+
+        # Create a column for the index_CUST_CODE - this is the index of the DataFrame
+        pred_df.loc[:, "index_CUST_CODE"] = np.sort(mapping_df["index_CUST_CODE"].unique())
+
+        # Melt the DataFrame
+        pred_df = pd.melt(pred_df, id_vars="index_CUST_CODE", value_vars=products)
+        pred_df = pred_df.rename(
+            columns={"variable": "index_PROD_CODE", "value": "PRED_QUANTITY"}
+        )
+
+        # Create rank of the predicted quantity by customer
+        pred_df.loc[:, "pred_rank"] = pred_df.groupby("index_CUST_CODE")[
+            "PRED_QUANTITY"
+        ].rank("dense", ascending=False)
+
+        # Keep only the top x products
+        pred_df = pred_df.loc[pred_df["pred_rank"] <= top_x]
+
+        # Map the CUST_CODE and PROD_CODE
+        cust_map = mapping_df[["CUST_CODE", "index_CUST_CODE"]].drop_duplicates()
+        pred_df = pred_df.merge(cust_map, on="index_CUST_CODE")
+        pred_df.drop("index_CUST_CODE", axis=1, inplace=True)
+
+        prod_map = mapping_df[["PROD_CODE", "index_PROD_CODE"]].drop_duplicates()
+        pred_df = pred_df.merge(prod_map, on="index_PROD_CODE")
+        pred_df.drop("index_PROD_CODE", axis=1, inplace=True)
+
+        return pred_df
     
