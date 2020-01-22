@@ -1,5 +1,5 @@
 import pandas as pd
-import numpy as np
+
 
 class create_features:
     """ Create features for classification model"""
@@ -7,29 +7,36 @@ class create_features:
     def __init__(self, obs_st, obs_end):
         """ Method for initializing the create_features object
 
-        Args:
-        obs_st
-        obs_end
-
-        Attributes:
-            obs_st:  The start week for the observation period on which features are created
-            obs_end: The end week for the observation period on which features are created
+        Parameters
+        ----
+        obs_st : str
+            The start week for the observation period on which features are created
+        obs_end : str
+            The end week for the observation period on which features are created
 
         """
+
         self.obs_st = obs_st
         self.obs_end = obs_end
 
     def filter_cust_trans(self, df, train_df, test_df):
-        """
-        Function to filter the customer transactions file to only those customer and product combinations that are in the
-        training or test sets and to the observation period
+        """Function to filter the customer transactions file to only those customer and product combinations that are
+        in the training or test sets.  Also filters the file only to the required observation period
 
-        :param df: name of the unfiltered customer transaction file
-        :param train_df: name of the DataFrame containing the customers and products for training
-        :param test_df: name of the DataFrame containing the customers and products for testing
-            :param obs_st:  The start week of the observation period
-        :param obs_end:  The end week of the observations period
-        :return: Filtered customer transactions DataFrame
+        Parameters
+        ----------
+        df : pandas.DataFrame
+            name of the filtered customer transaction file
+        train_df : pandas.DataFrame
+            name of the DataFrame containing the customers and products for training
+        test_df : pandas.DataFrame
+            name of the DataFrame containing the customers and products for testing
+
+        Returns
+        -------
+        df : pandas.DataFrame
+           Filtered customer transactions DataFrame containing only customer / product combinations found in the
+           training or test sets for all weeks in the observation period
 
         """
 
@@ -42,38 +49,59 @@ class create_features:
         df = df.merge(train_test_cust_prods, on=["CUST_CODE", "PROD_CODE"])
 
         # Filter to the observation period
-        df = df.loc[(df["SHOP_WEEK"] >= self.obs_st) & (df["SHOP_WEEK"] <= self.obs_end)]
+        df = df.loc[
+            (df["SHOP_WEEK"] >= self.obs_st) & (df["SHOP_WEEK"] <= self.obs_end)
+        ]
 
         return df
 
-
     def get_product_hierarchy_map(self, df):
-        """
-        Function to create a mapping file between PROD_CODE and all levels of the product hierarchy
+        """Function to create a mapping file between PROD_CODE and all levels of the product hierarchy
 
-        :param df: name of the customer transaction file
-        :return: Hierarchy mapping DataFrame
+        Parameters
+        ----------
+        df : pandas.DataFrame
+            name of the filtered customer transaction file
+
+        Returns
+        -------
+        hierarchy_map : pandas.DataFrame
+            DataFrame containing a lookup between PROD_CODE and all other levels of the hierarchy
 
         """
 
         hierarchy_map = df[
-            ["PROD_CODE", "PROD_CODE_10", "PROD_CODE_20", "PROD_CODE_30", "PROD_CODE_40"]
+            [
+                "PROD_CODE",
+                "PROD_CODE_10",
+                "PROD_CODE_20",
+                "PROD_CODE_30",
+                "PROD_CODE_40",
+            ]
         ].drop_duplicates()
 
         return hierarchy_map
 
-
     def get_sp_vi_qu(self, df, hierarchy_map, periods, wks, lvls):
-        """
-        Function to create a DataFrame of total customer spend, quantity, visits over specified time blocks and
-        levels of the hierarchy
+        """Function to create a mapping file between PROD_CODE and all levels of the product hierarchy
 
-        :param df: name of the customer transaction file
-        :param hierarchy_map: DataFrame containing a lookup between PROD_CODE and all other levels of the hierarchy
-        :param periods: List containing the start weeks for a period
-        :param wks:  List containing the weeks associasted with the periods
-        :param lvls:  Levels of the hierarchy on which to create the metrics - MUST CONTAIN PROD_CODE
-        :return: DataFrame containing the summary metrics for each customer
+        Parameters
+        ----------
+        df : pandas.DataFrame
+            name of the filtered customer transaction file
+        hierarchy_map : pandas.DataFrame
+            DataFrame containing a lookup between PROD_CODE and all other levels of the hierarchy
+        periods : list
+            list containing the start weeks for a period
+        wks : list
+            list containing the weeks associated with the periods
+        lvls : list
+            list containing the levels of the hierarchy on which create the metrics - MUST CONTAIN PROD_CODE
+
+        Returns
+        -------
+        cust_summ_final : pandas.DataFrame
+            DataFrame containing the summary metrics for each customer
 
         """
 
@@ -137,17 +165,26 @@ class create_features:
 
         return cust_summ_final.fillna(0)
 
-
     def get_chng_features(self, df, wks, lvls):
-        """
-        Function to create change in spend, visits, quantity over the most recent period
+        """Function to create change in spend, visits, quantity over the most recent period
 
-        :param df: DataFrame containing spend, quantity and visits over various time periods and levels of the hierarchy
-                   for each customer
-        :param wks:  list of weeks to run change calculations
-        :param lvls:  list of levels to run change calculations
-        :return: DataFrame containing the percentage change over time bands from the most recent time period
+        Parameters
+        ----------
+        df : pandas.DataFrame
+            DataFrame containing spend, quantity and visits over various time periods and levels of the hierarchy
+            for each customer
+        wks : list
+            list containing the weeks associated with the periods
+        lvls : list
+            list containing the levels of the hierarchy on which create the metrics - MUST CONTAIN PROD_CODE
+
+        Returns
+        -------
+        chng_df : pandas.DataFrame
+            DataFrame containing the percentage change over time bands from the most recent time period
+
         """
+
         chng_df = df.copy()
         for lvl in lvls:
             for i in range(0, len(wks)):
@@ -184,18 +221,26 @@ class create_features:
 
         return chng_df.fillna(0)
 
-
     def time_last_purchased(self, df, hierarchy_map, lvls):
-        """
-        Function to get the time since last purchased for specified levels of the hierarchy
+        """Function to get the time since last purchased for specified levels of the hierarchy
 
-        :param df: Customer transaction DataFrame
-        :param hierarchy_map:  mapping file between PROD_CODE and other levels of the hierarchy
-        :param lvls:  list of levels to run change calculations
-        :return: DataFrame containing the median time a customer purchased an item or shopped in each level of the hierarchy.
-                 DataFrame also contains the median time ALL customers purchased an item or shopped in each level of the
-                 hierarchy and the number of weeks since the customer last purchased an item or shopped in each level of the
-                 hierarchy
+        Parameters
+        ----------
+        df : pandas.DataFrame
+            name of the filtered customer transaction DataFrame
+        hierarchy_map : pandas.DataFrame
+            DataFrame containing mapping between PROD_CODE and other levels of the hierarchy
+        lvls : list
+            list containing the levels of the hierarchy on which create the metrics - MUST CONTAIN PROD_CODE
+
+        Returns
+        -------
+        time_since_final : pandas.DataFrame
+            DataFrame containing the median time a customer purchased an item or shopped in each level of
+            the hierarchy. DataFrame also contains the median time ALL customers purchased an item or shopped
+            in each level of the hierarchy and the number of weeks since the customer last purchased an item
+            or shopped in each level of the hierarchy
+
         """
 
         last_df = df[["CUST_CODE", "SHOP_DATE"] + lvls].copy()
@@ -226,7 +271,9 @@ class create_features:
             lags.dropna(inplace=True)
 
             # Calculate the time between visits
-            lags.loc[:, "TIME_BTWN"] = (lags["SHOP_DATE"] - lags["LAG_SHOP_DATE"]).dt.days
+            lags.loc[:, "TIME_BTWN"] = (
+                lags["SHOP_DATE"] - lags["LAG_SHOP_DATE"]
+            ).dt.days
 
             # Now get the median time between visits BY CUST_CODE AND hierarchy level
             median_cust = (
@@ -257,7 +304,9 @@ class create_features:
                 columns={"TIME_BTWN": "TIME_BTWN_LAST_{}".format(lvls[i])}, inplace=True
             )
 
-            median_final = median_final.merge(last_time_btween, on=["CUST_CODE", lvls[i]])
+            median_final = median_final.merge(
+                last_time_btween, on=["CUST_CODE", lvls[i]]
+            )
 
             if lvls[i] == "PROD_CODE":
                 time_since_final = median_final
@@ -270,17 +319,26 @@ class create_features:
 
         return time_since_final
 
-
     def get_time_since_ratios(self, df, lvls):
-        """
-        Function to get the ratio of time since last purchased to customer and overall median by levels of the hierarchy
+        """Function to get the ratio of time since last purchased to customer and overall median by
+        levels of the hierarchy
 
-        :param df: DataFrame containing median and overall time between purchases as well as time since last purchase
-                   by different levels of the hierarchy
-        :param lvls:  list of levels to run change calculations
-        :return: DataFrame containing for each customer the ratio between the time since last purchased and median time
-                 between purchases by customer and overall for specified levels of the hierarchy
+        Parameters
+        ----------
+        df : pandas.DataFrame
+            DataFrame containing median and overall time between purchases as well as time since last purchase
+            by different levels of the hierarchy
+        lvls : list
+            list containing the levels of the hierarchy on which create the metrics - MUST CONTAIN PROD_CODE
+
+        Returns
+        -------
+        ratio_df: pandas.DataFrame
+            DataFrame containing for each customer the ratio between the time since last purchased and median time
+            between purchases by customer and overall for specified levels of the hierarchy
+
         """
+
         ratio_df = df.copy()
         for lvl in lvls:
             ratio_df.loc[:, "TIME_BTWN_RATIO_CUST_{}".format(lvl)] = (
@@ -299,17 +357,25 @@ class create_features:
 
         return ratio_df
 
-
     def create_seg_summary(self, df, segs, item_or_cust):
-        """
-        Function to calculate the spend, visits and quantity (total and proportion) for each basket segment.  Summaries
-        can be created by customer or item.  NOTE:  If item is selected then the summary includes only the proportion variables
-        as the totals overall will be driven by sample size
+        """Function to calculate the spend, visits and quantity (total and proportion) for each basket segment.
+        Summaries can be created by customer or item.  NOTE:  If item is selected then the summary includes only
+        the proportion variables as the totals overall will be driven by sample size
 
-        :param df: Customer transaction DataFrame
-        :param segs:  List of basket segments on which to create the summaries
-        :item_or_cust: Takes value 'CUST_CODE' if summarizing by customer otherwise 'PROD_CODE'
-        :return: DataFrame containing the segment level summaries
+        Parameters
+        ----------
+        df : pandas.DataFrame
+            name of the filtered customer transaction DataFrame
+        segs : list
+            List of basket segments on which to create the summaries
+        item_or_cust : str
+            Takes value 'CUST_CODE' if summarizing by customer otherwise 'PROD_CODE'
+
+        Returns
+        -------
+        seg_summary : pandas.DataFrame
+            DataFrame containing the segment level summaries
+
         """
 
         # Get total spend, quantity and visits by customer
@@ -319,7 +385,12 @@ class create_features:
             .reset_index()
         )
 
-        tot_cust_summ.columns = [item_or_cust, "TOT_SPEND", "TOT_QUANTITY", "TOT_VISITS"]
+        tot_cust_summ.columns = [
+            item_or_cust,
+            "TOT_SPEND",
+            "TOT_QUANTITY",
+            "TOT_VISITS",
+        ]
 
         for i in range(0, len(segs)):
 
@@ -340,7 +411,9 @@ class create_features:
             )
             seg_summ.loc[:, "PROP_VISITS"] = seg_summ["VISITS"] / seg_summ["TOT_VISITS"]
 
-            seg_summ.drop(["TOT_SPEND", "TOT_QUANTITY", "TOT_VISITS"], axis=1, inplace=True)
+            seg_summ.drop(
+                ["TOT_SPEND", "TOT_QUANTITY", "TOT_VISITS"], axis=1, inplace=True
+            )
 
             var_list = [
                 "SPEND",
@@ -358,7 +431,10 @@ class create_features:
 
                 # Rename the columns
                 cols = [col for col in summ if item_or_cust not in col]
-                cols = ["{}_{}_".format(segs[i], var_list[j]) + col for col in cols]
+                cols = [
+                    "{}_{}_{}_".format(segs[i], var_list[j], item_or_cust) + col
+                    for col in cols
+                ]
                 cols = [item_or_cust] + cols
                 summ.columns = cols
 
@@ -379,7 +455,6 @@ class create_features:
 
         return seg_summary
 
-
     def merge_train_test(
         self,
         df,
@@ -387,24 +462,39 @@ class create_features:
         chng_df,
         time_since_df,
         ratios_df,
-        seg_summ_df,
+        seg_summ_cust_df,
+        seg_summ_item_df,
         user_factors,
         item_factors,
     ):
-        """
-        Function to merge all feature DataFrames together with the train or test set
+        """Function to merge all feature DataFrames together with the train or test set
 
-        :param df: name of the train or test set
-        :param cust_summ_df: name of the DataFrame containing the summarized spend, quantity and visits by
-                             levels of the hiearchy
-        :param chng_df: name of the DataFrame containing the change in spend, quantity and visits by levels of the hierarchy
-        :param time_since_df:  name of the DataFrame containing the time since last purchased data
-        :param ratios_df:  name of the DataFrame containing the ratios of spend, quantity and visits by various time bands
-                           and levels of the hierarchy
-        :param seg_summ_df:  name of the DataFrame containing summaries of the basket segments
-        :param user_factors:  name of the DataFrame containing the user factors
-        :param item_factors:  name of the DataFrame containing the item factors
-        :return: DataFrame for the train or test set containing all generated features
+        Parameters
+        ----------
+        df : pandas.DataFrame
+            DataFrame for the train or test set
+        cust_summ_df : pandas.DataFrame
+            DataFrame containing the summarized spend, quantity and visits by levels of the hierarchy
+        chng_df : pandas.DataFrame
+            DataFrame containing the change in spend, quantity and visits by levels of the hierarchy
+        time_since_df : pandas.DataFrame
+            DataFrame containing the time since last purchased data
+        ratios_df : pandas.DataFrame
+            DataFrame containing the ratios of spend, quantity and visits by various time bands and levels of the
+            hierarchy
+        seg_summ_cust_df : pandas.DataFrame
+            DataFrame containing summaries of the basket segments at the customer level
+        seg_summ_item_df : pandas.DataFrame
+            DataFrame containing summaries of the basket segments at the item level
+        user_factors :
+            DataFrame containing the user factors
+        item_factors :
+            DataFrame containing the item factors
+
+        Returns
+        -------
+        df : pandas.DataFrame
+            DataFrame for the train or test set containing all generated features
 
         """
 
@@ -428,8 +518,11 @@ class create_features:
         # Replace missing with the max of the median time between product purachases overall
         df = df.fillna(df["TIME_BTWN_RATIO_OVERALL_PROD_CODE"].max())
 
-        # Merge the basket segment summary
-        df = df.merge(seg_summ_df, on="CUST_CODE", how="left").fillna(0)
+        # Merge the basket segment summary for customers
+        df = df.merge(seg_summ_cust_df, on="CUST_CODE", how="left").fillna(0)
+
+        # Merge the basket segment summary for items
+        df = df.merge(seg_summ_item_df, on="PROD_CODE", how="left").fillna(0)
 
         # Merge the user factors
         df = df.merge(user_factors, on="CUST_CODE")
@@ -438,3 +531,29 @@ class create_features:
         df = df.merge(item_factors, on="PROD_CODE")
 
         return df
+
+    def append_cust_features(self, df, append_df):
+
+        """Function to merge customer segment features to another DataFrame
+
+        Parameters
+        ----------
+        df : pandas.DataFrame
+            customer transaction DataFrame
+        append_df : pandas.DataFrame
+            DataFrame to append the customer segments to
+
+        Returns
+        -------
+        append_df : pandas.DataFrame
+            DataFrame with customer segment features appended
+
+        """
+
+        cust_segs = df[
+            ["CUST_CODE", "CUST_PRICE_SENSITIVITY", "CUST_LIFESTAGE"]
+        ].drop_duplicates()
+
+        append_df = append_df.merge(cust_segs, on=["CUST_CODE"], how="left").fillna('XX')
+
+        return append_df

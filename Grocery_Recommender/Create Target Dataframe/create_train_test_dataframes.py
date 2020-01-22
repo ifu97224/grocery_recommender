@@ -1,15 +1,22 @@
 import pandas as pd
 
 def get_targets(df, target_wk):
+    """Function to create a DataFrame of customers and products purchased during the target week
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        name of the customer transaction file
+    target_wk : int
+        the target week on which the models will be built
+
+    Returns
+    -------
+    target_custs : pandas.DataFrame
+        DataFrame containing CUST_CODE, PROD_CODE and Target flag
+
     """
-    Function to create a DataFrame of customers and products purchased during the target week
-
-    :param df: name of the customer transaction file
-    :param target_wk: the target week on which the models will be built
-    :return: DataFrame containing CUST_CODE, PROD_CODE and TARGET flag)
-
-    """
-
+    
     target_custs = df[df["SHOP_WEEK"] == target_wk]
     target_custs = target_custs[["CUST_CODE", "PROD_CODE"]].drop_duplicates()
     target_custs.dropna(inplace=True)
@@ -19,16 +26,24 @@ def get_targets(df, target_wk):
 
 
 def get_active_custs(df, start_wk, end_wk):
+    """Function to return a set of customers that visited between the provided start and end weeks
+
+        Parameters
+        ----------
+        df : pandas.DataFrame
+            name of the customer transaction file
+        start_wk : int
+            the start week on which to look for customer visits
+        end_wk : int
+            the end week on which to look for customer visits
+
+        Returns
+        -------
+        active_custs : pandas.DataFrame
+            DataFrame containing CUST_CODE for all customers that visited between the start and end weeks
+
     """
-    Function to return a set of customers that visited between the provided start and end weeks
-
-    :param df: name of the customer transaction file
-    :param start_wk: the start week on which to look for customer visits
-    :param end_wk:  the end week on which to look for customer visits
-    :return: DataFrame containing CUST_CODE for all customers that visited between the start and end weeks
-
-    """
-
+    
     active_custs = df[(df["SHOP_WEEK"] >= start_wk) & (df["SHOP_WEEK"] <= end_wk)]
     active_custs = active_custs[["CUST_CODE"]].drop_duplicates()
     active_custs.dropna(inplace=True)
@@ -37,15 +52,23 @@ def get_active_custs(df, start_wk, end_wk):
 
 
 def add_non_target(active_df, target_df):
+    """Function to add all non-target customers (active customers that did not purchase the item in the observation 
+    period)
+
+    Parameters
+    ----------
+    active_df : pandas.DataFrame
+        name of the DataFrame containing all active customers
+    target_df : pandas.DataFrame
+        name of the DataFrame containing the target customers and products
+    
+    Returns
+    -------
+    active_target : pandas.DataFrame
+        DataFrame containing CUST_CODE, PROD_CODE and TARGET for all customer and product combinations
+
     """
-    Function to add all non-target customers (active customers that did not purchase the item in the observation period)
-
-    :param active_df: name of the file containing the list of active customers
-    :param target_df: name of the file containing the target customers and products (output from get_targets function)
-    :return: DataFrame containing CUST_CODE, PROD_CODE and TARGET for all customer and product combinations
-
-    """
-
+    
     # Get all unique products purchased in the observation period that will be modelled
     unique_prods = target_df[["PROD_CODE"]].drop_duplicates()
 
@@ -65,15 +88,21 @@ def add_non_target(active_df, target_df):
 
 
 def sample_non_target(df):
-    """
-    Function to downsample non-target customers and create a balanced DataFrame with equal numbers of TARGET 1 and TARGET 0
+    """Function to downsample non-target customers and create a balanced DataFrame with equal numbers of TARGET 1 and TARGET 0
     for each PROD_CODE
 
-    :param df: name of the file containing all active customers and the target flag for each product
-    :return: DataFrame containing CUST_CODE, PROD_CODE and TARGET for all TARGET 1 and downsampled TARGET 0
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        name of the DataFrame containing all active customers and the target flag for each product
+
+    Returns
+    -------
+    final_sample : pandas.DataFrame
+        DataFrame containing CUST_CODE, PROD_CODE and TARGET for all TARGET 1 and down-sampled TARGET 0
 
     """
-
+    
     # Get the count of target customers
     target_count = df[df["TARGET"] == 1].count()[0]
 

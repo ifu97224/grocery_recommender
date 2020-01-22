@@ -5,14 +5,27 @@ from sagemaker import get_execution_role
 
 
 def iterate_bucket_items(bucket):
-    """
-    Generator that iterates over all objects in a given s3 bucket
+    """Generator that iterates over all objects in a given s3 bucket
 
     See http://boto3.readthedocs.io/en/latest/reference/services/s3.html#S3.Client.list_objects_v2
     for return data format
-    :param bucket: name of s3 bucket
-    :return: dict of metadata for an object
+
+    Parameters
+    ----------
+    bucket : str
+        name of s3 bucket
+    train_df : pandas.DataFrame
+        name of the DataFrame containing the customers and products for training
+    test_df : pandas.DataFrame
+        name of the DataFrame containing the customers and products for testing
+
+    Returns
+    -------
+    Python dict
+       dict of metadata for an object
+
     """
+    
     client = boto3.client("s3")
     paginator = client.get_paginator("list_objects_v2")
     page_iterator = paginator.paginate(Bucket=bucket)
@@ -24,12 +37,20 @@ def iterate_bucket_items(bucket):
 
 
 def import_data(bucket):
+    """Function to import all data csv's from the S3 bucket
 
-    """
-    Function to import all data csv's from the S3 bucket
+    Parameters
+    ----------
+    bucket : str
+        name of s3 bucket
+    
+    Returns
+    -------
+    time_data : pandas.DataFrame
+       DataFrame containing calendar lookup
+    all_trans : pandas.DataFrame
+        Pandas DataFrames containing customer transactions for all weeks
 
-    :param bucket: name of s3 bucket
-    :return: Pandas DataFrames containing customer transactions for all weeks and a calendar lookup
     """
 
     # Set up empty base DataFrame

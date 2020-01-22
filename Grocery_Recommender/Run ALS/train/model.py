@@ -9,7 +9,7 @@ import csv
 
 
 class fit_and_tune_als:
-    """ The fit_and_tune_als class contains all functions necessary to fit and tune ALS models using the Implicit and 
+    """ The fit_and_tune_als class contains all functions necessary to fit and tune ALS models using the Implicit and
         Hyperopt libraries"""
 
     def __init__(self, sparse_matrix):
@@ -25,20 +25,35 @@ class fit_and_tune_als:
         self.sparse_matrix = sparse_matrix
 
     def fit_als(self, alpha, num_factors, reg, iters):
-        """
-        Function to fit the ALS algorithm based on the provided hyperparameters
+        """Function to fit the ALS algorithm based on the provided hyperparameters
 
-        :return als_model:  The specified ALS model
-        :return user_vecs:  The user vectors from the fitted model
-        :return item_vecs:  The item vectors from the fitted model
+        Parameters
+        ----------
+        alpha : int
+            ALS alpha parameter
+        num_factors : int
+            Number of user and item factors to use
+        reg : int
+            Regularization parameter for the ALS
+        iters : int
+            Number of iterations to run the ALS
+
+        Returns
+        -------
+        als_model : implicit.als.AlternatingLeastSquares object
+           Fitted ALS model
+        user_vecs : pandas.DataFrame
+            DataFrame containing the user vectors for each customer
+        item_vecs : pandas.DataFrame
+            DataFrame containing the item vectors for each item
         """
 
         os.environ["MKL_NUM_THREADS"] = "1"
 
         als_model = implicit.als.AlternatingLeastSquares(
-            factors=num_factors, 
-            regularization=reg, 
-            iterations=iters, 
+            factors=num_factors,
+            regularization=reg,
+            iterations=iters,
             use_gpu=False
         )
 
@@ -51,15 +66,26 @@ class fit_and_tune_als:
         return als_model, user_vecs, item_vecs
 
     def get_mse(self, user_vecs, item_vecs, train_df, test_df):
-        """
-        Function to get the MSE from the fitted model on the train and test sets
+        """Function to get the MSE from the fitted model on the train and test sets
 
-        :param user_vecs: The user vectors from the fitted model
-        :param item_vecs: The item vectors from the fitted model
-        :param train_df: The training DataFrame
-        :param test_df: The test DataFrame
-        :return training_mse:  The MSE based on the training set
-        :return test_mse:  The MSE based on the test set
+        Parameters
+        ----------
+        user_vecs : pandas.DataFrame
+            DataFrame containing the user vectors from the fitted model
+        item_vecs : pandas.DataFrame
+            DataFrame containing the item vectors from the fitted model
+        train_df : pandas.DataFrame
+             DataFrame containing the training data
+        test_df : pandas.DataFrame
+            DataFrame containing the test data
+
+        Returns
+        -------
+        training_mse : float
+            The training MSE
+        test_mse : float
+            The test MSE
+
         """
 
         # Get the predicted DataFrame from the dot product of the user and item vectors
@@ -103,24 +129,38 @@ class fit_and_tune_als:
         return training_mse, test_mse
 
     def tune_params(self, search_space, out_file, max_evals, train_df, test_df):
-        """
-        Function to tune the model parameters
+        """Function to tune the ALS model parameters
 
-        :param search_space: A dictionary containing the hyperparameters and values to search over
-        :param out_file: File path to hold output data
-        :param max_evals: The maximum number of trials for the hyperparameter search
-        :param train_df: The training set DataFrame
-        :param test_df: The test set DataFrame
+        Parameters
+        ----------
+        search_space : dict
+            Dictionary containing the hyperparameters and values to search over
+        out_file : str
+            File path to hold output data
+        max_evals : int
+             The maximum number of trials for the hyperparamater search
+        train_df : pandas.DataFrame
+            DataFrame containing the training data
+        test_df : pandas.DataFrame
+            DataFrame containing the test data
+
+        Returns
+        ----------
+        best : hyperopt object
+            hyperopt object containing the best hyperparamters
 
         """
-        
+
         train_df = train_df
         test_df = test_df
 
         def objective(
                 params, train_df=train_df, test_df=test_df
         ):
-            """Returns validation score from hyperparameters"""
+            """
+            Returns
+            ----------
+            Returns validation score from hyperparameters"""
 
             print(params)
 
@@ -188,27 +228,38 @@ class fit_and_tune_als:
         )
 
         return best
-    
+
     def get_user_item_factors(
-        self, user_vecs, item_vecs, train_df, train_items_mapping, train_cust_mapping
+            self, user_vecs, item_vecs, train_df, train_items_mapping, train_cust_mapping
     ):
+        """Function to get user and item factors for the fitted ALS model
+
+        Parameters
+        ----------
+        user_vecs : pandas.DataFrame
+            DataFrame containing the user vectors from the fitted ALS model
+        item_vecs : pandas.DataFrame
+            DataFrame containing the item vectors from the fitted ALS model
+        train_df : pandas.DataFrame
+            DataFrame containing the training data
+        train_items_mapping : pandas.DataFrame
+            DataFrame containing the mapping from index_PROD_CODE to PROD_CODE
+        train_cust_mapping : pandas.DataFrame
+            DataFrame containing the mapping from index_CUST_CODE to CUST_CODE
+
+        Returns
+        ----------
+        user_vecs : pandas.DataFrame
+            DataFrame containing the mapped user vectors from the fitted model
+        item_vecs : pandas.DataFrame
+            DataFrame containing the mapped item vectors from the fitted model
+
         """
-        Function to get user and item factors for the fitted ALS model
-
-        :param user_vecs:  The user vectors from the fitted model
-        :param item_vecs:  The item vectors from the fitted model
-        :param train_df:  The training DataFrame
-        :param train_item_mapping:  Mapping file from index_PROD_CODE to PROD_CODE
-        :param train_cust_mapping:  Mapping file from index_CUST_CODE to CUST_CODE
-
-        :return user_vecs:  The user vectors from the fitted model
-        :return item_vecs:  The item vectors from the fitted model
-        """
-
+        
         # Get the user factors
         user_factors = pd.DataFrame(user_vecs)
         user_factors = user_factors.add_prefix("factor_")
-        
+
         user_factors.loc[:, "index_CUST_CODE"] = np.sort(
             train_df["index_CUST_CODE"].unique()
         )
@@ -221,7 +272,7 @@ class fit_and_tune_als:
         # Get the item factors
         item_factors = pd.DataFrame(item_vecs)
         item_factors = item_factors.add_prefix("factor_")
-        
+
         item_factors.loc[:, "index_PROD_CODE"] = train_df[
             "index_PROD_CODE"
         ].unique()
@@ -232,19 +283,29 @@ class fit_and_tune_als:
         item_factors.drop("index_PROD_CODE", axis=1, inplace=True)
 
         return user_factors, item_factors
-    
+
     def predict(self, user_vecs, item_vecs, mapping_df, top_x):
-        """
-        Function to get predictions from the fitted ALS model
+        """Function to get predictions from the fitted ALS model
 
-        :param user_vecs: The user vectors from the ALS model
-        :param item_vecs: The item vectors from the ALS model
-        :mapping_df:  The DataFrame with the lookup between the customer and product indices and 
-                      the actual CUST_CODE and PROD_CODE
-        :top_x: Number of predictions to return per customer
-        :return pred_df:  The DataFrame containing the CUST_CODE and prediction for each PROD_CODE
+        Parameters
+        ----------
+        user_vecs : pandas.DataFrame
+            DataFrame containing the user vectors from the fitted ALS model
+        item_vecs : pandas.DataFrame
+            DataFrame containing the item vectors from the fitted ALS model
+        mapping_df : pandas.DataFrame
+            DataFrame containing the mapping between the customer and product indices and the actual CUST_CODE and
+            PROD_CODE
+        top_x : int
+            Number of predictions to return per customer
+            
+        Returns
+        ----------
+        pred_df : pandas.DataFrame
+            DataFrame containing the CUsT_CODE and prediction for each PROD_CODE
+            
         """
-
+                
         # Get the predicted DataFrame from the dot product of the user and item vectors
         pred_df = pd.DataFrame(user_vecs.dot(item_vecs.T))
 
@@ -281,4 +342,3 @@ class fit_and_tune_als:
         pred_df.drop("index_PROD_CODE", axis=1, inplace=True)
 
         return pred_df
-    
