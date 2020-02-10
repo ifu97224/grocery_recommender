@@ -1,8 +1,6 @@
 import pandas as pd
 import numpy as np
 import boto3
-from sagemaker import get_execution_role
-
 
 def iterate_bucket_items(bucket):
     """Generator that iterates over all objects in a given s3 bucket
@@ -25,7 +23,7 @@ def iterate_bucket_items(bucket):
        dict of metadata for an object
 
     """
-    
+
     client = boto3.client("s3")
     paginator = client.get_paginator("list_objects_v2")
     page_iterator = paginator.paginate(Bucket=bucket)
@@ -43,7 +41,7 @@ def import_data(bucket):
     ----------
     bucket : str
         name of s3 bucket
-    
+
     Returns
     -------
     time_data : pandas.DataFrame

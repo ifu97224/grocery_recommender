@@ -5,6 +5,7 @@ import warnings
 import numpy as np
 import pandas as pd
 
+
 def feature_profiling(df, feat, target, hist_bins):
     """Generate data profiling for features.  For numeric features generate:
 
@@ -22,7 +23,7 @@ def feature_profiling(df, feat, target, hist_bins):
     Parameters
     ----------
     df : pandas.DataFrame
-        Pandas dataframe containing the feature and the target
+        Pandas DataFrame containing the feature and the target
     feat : str
         name of the feature for profiling
     target : str
@@ -98,3 +99,51 @@ def feature_profiling(df, feat, target, hist_bins):
             )
 
             iter = iter + 2
+
+
+def get_paired_correlations(df, plot_heatmap, num_pairs):
+    """Calculate the pearson correlation between pairs of items in a DataFrame:
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        Pandas DataFrame containing the features on which to run the correlations
+    plot_heatmap : bool
+        Flag identifying if a heatmap should be generated
+    num_pairs : int
+        The number of pairs to return the correlation for
+    """
+
+    num_vars = df.select_dtypes(exclude=["object", "datetime"])
+
+    corr_data = num_vars.copy()
+    corr = corr_data.corr("pearson")
+
+    if plot_heatmap:
+        # Plot a heatmap since there aren't that many variables in this dataset
+        plt.figure(1, figsize=(16, 12))
+        sns.heatmap(
+            corr, xticklabels=corr.columns.values, yticklabels=corr.columns.values
+        )
+
+        # Look at the top correlated pairs by absolute correlation value
+        corr = corr.abs()
+
+        s = corr.unstack()
+        so = s.sort_values(kind="quicksort", ascending=False)
+
+    def get_redundant_pairs(df):
+        # Get diagnoal and lower triangular pairs of the correlation matrix
+        pairs_to_drop = set()
+        cols = df.columns
+        for i in range(0, df.shape[1]):
+            for j in range(0, i + 1):
+                pairs_to_drop.add((cols[i], cols[j]))
+        return pairs_to_drop
+
+    au_corr = corr_data.corr().abs().unstack()
+    labels_to_drop = get_redundant_pairs(corr_data)
+    au_corr = au_corr.drop(labels=labels_to_drop).sort_values(ascending=False)
+
+    print("Top Absolute Correlations")
+    display(au_corr[0:num_pairs])

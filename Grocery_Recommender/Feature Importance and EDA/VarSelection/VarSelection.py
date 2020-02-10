@@ -8,13 +8,13 @@ from .SBS import SBS
 from .timing import timing
 
 
-class variable_selection():
+class variable_selection:
     """ The variable selection class contains a set of methods to support variable selection in classification modeling """
 
     def __init__(self, df, target_var, k_features=10, random_state=1):
 
         """ Method for initializing a VarSelection object
-        
+
         Parameters
         ----------
         df : pandas.DataFrame
@@ -77,14 +77,20 @@ class variable_selection():
         corr_df_input = self.df._get_numeric_data()
 
         # Calculate the squared correlation and remove the target
-        squared_corr = pd.DataFrame(corr_df_input[corr_df_input.columns].corr()[self.target_var][:]).reset_index()
-        squared_corr.columns = ('features', 'Squared_Correlation')
-        squared_corr.loc[:, 'Squared_Correlation'] = squared_corr[['Squared_Correlation']] ** 2
+        squared_corr = pd.DataFrame(
+            corr_df_input[corr_df_input.columns].corr()[self.target_var][:]
+        ).reset_index()
+        squared_corr.columns = ("features", "Squared_Correlation")
+        squared_corr.loc[:, "Squared_Correlation"] = (
+            squared_corr[["Squared_Correlation"]] ** 2
+        )
         squared_corr = squared_corr[squared_corr.features != self.target_var]
 
         # Order and select the top X
-        squared_corr.sort_values(by='Squared_Correlation', ascending=False, inplace=True)
-        squared_corr = squared_corr.iloc[:self.k_features]
+        squared_corr.sort_values(
+            by="Squared_Correlation", ascending=False, inplace=True
+        )
+        squared_corr = squared_corr.iloc[: self.k_features]
 
         return squared_corr
 
@@ -120,9 +126,9 @@ class variable_selection():
         # Get the rf importance and append the feature variable labels
         importance = pd.DataFrame(forest.feature_importances_)
         rf_importance = feat_labels.merge(importance, left_index=True, right_index=True)
-        rf_importance.columns = ['features', 'rf_importance']
-        rf_importance.sort_values('rf_importance', ascending=False, inplace=True)
-        rf_importance['rf_rank'] = range(1, len(rf_importance) + 1)
+        rf_importance.columns = ["features", "rf_importance"]
+        rf_importance.sort_values("rf_importance", ascending=False, inplace=True)
+        rf_importance["rf_rank"] = range(1, len(rf_importance) + 1)
 
         rf_importance = rf_importance[rf_importance.rf_rank <= self.k_features]
 
@@ -162,16 +168,15 @@ class variable_selection():
             lm = linear_model.fit(X_scaled, y)
         else:
             lm = linear_model.fit(X, y)
-            
-            
+
         # get the coefficients and features into a data frame and create the rank
         lm_coeff = pd.DataFrame(lm.coef_).T
         feat_labels = pd.DataFrame(X.columns[1:])
         lm_reg_coeff = feat_labels.merge(lm_coeff, left_index=True, right_index=True)
-        lm_reg_coeff.columns = ['features', 'coeff']
-        lm_reg_coeff['coeff_abs'] = lm_reg_coeff['coeff'].abs()
-        lm_reg_coeff.sort_values('coeff_abs', ascending=False, inplace=True)
-        lm_reg_coeff['coeff_rank'] = range(1, len(lm_reg_coeff) + 1)
+        lm_reg_coeff.columns = ["features", "coeff"]
+        lm_reg_coeff["coeff_abs"] = lm_reg_coeff["coeff"].abs()
+        lm_reg_coeff.sort_values("coeff_abs", ascending=False, inplace=True)
+        lm_reg_coeff["coeff_rank"] = range(1, len(lm_reg_coeff) + 1)
 
         lm_reg_coeff = lm_reg_coeff[lm_reg_coeff.coeff_rank <= self.k_features]
 
@@ -214,10 +219,9 @@ class variable_selection():
 
         clf = clf
 
-        rfecv = RFECV(estimator=clf,
-                      step=1,
-                      cv=StratifiedKFold(cv_folds),
-                      scoring=scoring)
+        rfecv = RFECV(
+            estimator=clf, step=1, cv=StratifiedKFold(cv_folds), scoring=scoring
+        )
 
         rfecv.fit(X, y)
 
@@ -271,9 +275,11 @@ class variable_selection():
 
         cluster_numbers = pd.DataFrame(agglo.labels_)
         feat_labels = pd.DataFrame(X_df.columns)
-        var_clust = feat_labels.merge(cluster_numbers, left_index=True, right_index=True)
-        var_clust.columns = ['features', 'Cluster_Number']
-        var_clust.sort_values('Cluster_Number', inplace=True)
+        var_clust = feat_labels.merge(
+            cluster_numbers, left_index=True, right_index=True
+        )
+        var_clust.columns = ["features", "Cluster_Number"]
+        var_clust.sort_values("Cluster_Number", inplace=True)
 
         return var_clust
 
@@ -323,9 +329,9 @@ class variable_selection():
 
         # Show the plot of the score by all subsets
         k_feat = [len(k) for k in sbs.subsets_]
-        plt.plot(k_feat, sbs.scores_, marker='o')
-        plt.ylabel('Score')
-        plt.xlabel('Number of Features')
+        plt.plot(k_feat, sbs.scores_, marker="o")
+        plt.ylabel("Score")
+        plt.xlabel("Number of Features")
         plt.grid()
         plt.show()
 
