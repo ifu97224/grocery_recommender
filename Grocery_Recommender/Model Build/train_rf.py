@@ -17,7 +17,7 @@ if __name__ == "__main__":
     parser.add_argument("--tune", type=int, default=1)
 
     # Sagemaker specific arguments
-    parser.add_argument("--model-dir", type=str, default=os.environ["SM_MODEL_DIR"])
+    parser.add_argument("--model_dir", type=str, default=os.environ["SM_MODEL_DIR"])
 
     args, _ = parser.parse_known_args()
 
