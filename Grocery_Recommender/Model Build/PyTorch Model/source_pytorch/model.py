@@ -36,6 +36,7 @@ class BinaryClassifier(nn.Module):
 
         for i in range(1, num_layers + 1):
             self.layers.append(nn.Linear(current_dim, hidden_dim))
+            self.layers.append(nn.ReLU())
             self.layers.append(nn.BatchNorm1d(hidden_dim, momentum=momentum))
             self.layers.append(nn.Dropout(dropout_rate))
             current_dim = hidden_dim
@@ -44,6 +45,7 @@ class BinaryClassifier(nn.Module):
             if isinstance(m, nn.Linear):
                 nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
 
+        
         # sigmoid layer
         self.sig = nn.Sigmoid()
 
@@ -55,8 +57,8 @@ class BinaryClassifier(nn.Module):
         """
 
         for layer in self.layers:
-            x = F.relu(layer(x))
-
+            x = layer(x)
+            
         x = self.out_layer(x)
         out = self.sig(x)
 
