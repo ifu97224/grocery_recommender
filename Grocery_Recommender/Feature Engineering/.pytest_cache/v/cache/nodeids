@@ -1,5 +1,9 @@
 [
   "test_create_features.py::test_filter_cust_trans",
   "test_create_features.py::test_get_product_hierarchy_map",
-  "test_create_features.py::test_get_sp_vi_qu"
+  "test_create_features.py::test_get_sp_vi_qu",
+  "test_create_features.py::test_get_chng_features",
+  "test_create_features.py::test_time_last_purchased",
+  "test_create_features.py::test_get_time_since_ratios",
+  "test_create_features.py::test_create_seg_summary"
 ]

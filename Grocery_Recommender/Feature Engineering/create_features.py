@@ -261,8 +261,8 @@ class create_features:
             # Sort by customer, product and date purchased and dedupe
             lags = last_df.sort_values(
                 ["CUST_CODE", lvls[i], "SHOP_DATE"]
-            ).drop_duplicates()
-            lags = lags[["CUST_CODE", lvls[i], "SHOP_DATE"]]
+            )
+            lags = lags[["CUST_CODE", lvls[i], "SHOP_DATE"]].drop_duplicates()
 
             # Get the lag of the SHOP_DATE by CUST_CODE and hierarchy level
             lags.loc[:, "LAG_SHOP_DATE"] = lags.groupby(["CUST_CODE", lvls[i]])[
