@@ -12,15 +12,6 @@ def iterate_bucket_items(bucket):
     ----------
     bucket : str
         name of s3 bucket
-    train_df : pandas.DataFrame
-        name of the DataFrame containing the customers and products for training
-    test_df : pandas.DataFrame
-        name of the DataFrame containing the customers and products for testing
-
-    Returns
-    -------
-    Python dict
-       dict of metadata for an object
 
     """
 
@@ -84,15 +75,18 @@ def import_data(bucket):
 
     # Fill DataFrame
     for i in iterate_bucket_items(bucket=bucket):
+        if 'udacity_capstone_data' in i["Key"]:
+        
+            print("Importing data for {}".format(i["Key"]))
+            data_location = "s3://{}/{}".format(bucket, i["Key"])
+            print(data_location)
+            print(i["Key"])
 
-        print("Importing data for {}".format(i["Key"]))
-        data_location = "s3://{}/{}".format(bucket, i["Key"])
+            if i["Key"] == "udacity_capstone_data/time.csv":
+                time_data = pd.read_csv(data_location)
 
-        if i["Key"] == "udacity_capstone_data/time.csv":
-            time_data = pd.read_csv(data_location)
-
-        else:
-            trans_data = pd.read_csv(data_location)
-            all_trans = pd.concat([all_trans, trans_data], axis=0)
+            else:
+                trans_data = pd.read_csv(data_location)
+                all_trans = pd.concat([all_trans, trans_data], axis=0)
 
     return time_data, all_trans
