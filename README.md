@@ -30,5 +30,5 @@ The code has been written with Python 3 utilizing the Amazon Sagemaker framework
 
 Each of the modules within the code should be run according to the DAG shown below:
 
-
+![](Images/project_dag.PNG)
 
