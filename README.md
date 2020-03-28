@@ -14,6 +14,10 @@ A recommender engine such as this could be utilized to:
 
 The recommender system is built utilizing matrix factorization techniques commonly used in recommender systems (specifically ALS) but also combines ML classification models and a simple DNN that add contextual features e.g. average customer purchase cycle for an item in order to predict the probability that a customer will purchase an item in a given week.  
 
+#### Motivation
+
+The project was completed as a capstone submission for the Udacity Machine Learning Engineer Nanodegree.  The final submission can be viewed in the PDF titled 'Udacity ML Engineer Capstone Submission' in the repo
+
 #### Data required to run the code
 
 The data used to build the recommender system was provided open source by Dunnhumby, a global leader in retail analytics.  The dataset contained a sample of 117 weeks of ‘real’ customer data from a large grocery store constructed to replicate typical pattern found in in-store data to allow the development of algorithms in a (near) real-world environment.  The dataset can be downloaded from the following location:
