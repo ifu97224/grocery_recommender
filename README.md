@@ -24,7 +24,11 @@ The actual data utilized was from the “Let’s get sort of real” section, sp
 
 #### Libraries required to run the code
 
-The code has been written with Python 3, all required libraries are contained within the requirements.txt file
+The code has been written with Python 3 utilizing the Amazon Sagemaker framework for model training. All required libraries are contained within the requirements.txt file
+
+#### How to run the code:
+
+Each of the modules within the code should be run according to the DAG shown below:
 
 
 
