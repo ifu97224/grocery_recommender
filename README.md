@@ -32,3 +32,6 @@ Each of the modules within the code should be run according to the DAG shown bel
 
 ![](Images/project_dag.PNG)
 
+#### Tests:
+
+Each of the functions within the Feature Engineering module contains a unit test that can be run with PyTest.  In order to run the tests navigate to the Feature Engineering module and run test_create_features.py in the command line
