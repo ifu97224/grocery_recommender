@@ -21,3 +21,10 @@ The data used to build the recommender system was provided open source by Dunnhu
 https://www.dunnhumby.com/careers/engineering/sourcefiles
 
 The actual data utilized was from the “Let’s get sort of real” section, specifically the data from a randomly selected group of 5,000 customers
+
+#### Libraries required to run the code
+
+The code has been written with Python 3, all required libraries are contained within the requirements.txt file
+
+
+
